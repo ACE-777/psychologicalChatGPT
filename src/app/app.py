@@ -4,15 +4,21 @@ import bot_token
 import api_key
 from telebot import types
 from model import model
+from pyclickhouse import Connection
 
 openai.api_key = api_key.key
 bot = telebot.TeleBot(bot_token.token)
 max_tokens = 128
 
+connection = Connection(
+        host='localhost',
+        port=8123,
+    )
+
 
 def request(call):
     bot.answer_callback_query(call.id, "Вы нажали кнопку \"Начать диалог\"")
-    bot.send_message(call.message.chat.id, "PLease write your request")
+    bot.send_message(call.message.chat.id, "Пожалуйста, напишите Ваш вопрос!")
     bot.register_next_step_handler(call.message, new_dialog)
 
 
@@ -30,7 +36,7 @@ def menu(call):
     bot.send_message(call.message.chat.id, "Вы вернулись в меню")
 
 
-# "id:", message.from_user.id
+# "id:" = message.from_user.id
 # send you a message with the inline keyboard
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
@@ -49,9 +55,10 @@ def send_welcome(message):
     keyboard.add(types.InlineKeyboardButton(text="Психологически-успокаивающее общение после собеса",
                                             callback_data="request"))
     keyboard.add(types.InlineKeyboardButton(text="Info", callback_data="info"))
-    bot.send_message(message.from_user.id, "Привет!\nМеня зовут getJobBot, я помогу тебе найти работу мечты и "
-                                           "расширить горизонт!\nВыбирай интересующие тебя опции из списка ниже, "
-                                           " и получай очки за выполнение заданий!", reply_markup=keyboard)
+    bot.send_message(message.from_user.id, "Привет!\nМеня зовут getJobBot, я помогу Вам найти работу мечты и "
+                                           "расширить горизонт!\nВыбирайте интересующие тебя опции из списка ниже, "
+                                           " и получай очки за выполнение заданий\nВаши показатели будут мотивировать "
+                                           "Вас двигаться дальше!", reply_markup=keyboard)
 
 
 # hook the user's button request
@@ -62,16 +69,11 @@ def handle_callback_query(call):
     elif call.data == "info":  # if user choose info button
         info(call)
     elif call.data == "key_yes":
-        # menu(call)
-        send_welcome(call.message)
+        menu(call)
+        # send_welcome(call.message)
     else:
         bot.answer_callback_query(call.id, "Вы не нажимали кнопок")
 
-
-# @bot.callback_query_handler(func=lambda call: call.data == 'key_yes')
-# def handle_callback_query(call):
-#     # Возвращаем пользователя в меню
-#     send_welcome(call.message)
 
 # if user choose new dialog button
 @bot.message_handler(func=lambda m: True)
@@ -79,7 +81,12 @@ def new_dialog(message):
     message_from_user = message.text
     keyboard = types.InlineKeyboardMarkup()
     keyboard.add(types.InlineKeyboardButton(text="Вернуться в меню", callback_data="key_yes"))
-    bot.send_message(message.from_user.id, model(message_from_user, max_tokens).choices[0].text, reply_markup=keyboard)
+    inputFromUser = str(message_from_user)
+    outputFromModel = str(model(message_from_user, max_tokens).choices[0].text)
+    cursor = connection.cursor()
+    insert_query = "INSERT INTO chat  VALUES ('{}', '{}')".format(inputFromUser, outputFromModel)
+    cursor.execute(insert_query)
+    bot.send_message(message.from_user.id, outputFromModel, reply_markup=keyboard)
 
 
 if __name__ == '__main__':

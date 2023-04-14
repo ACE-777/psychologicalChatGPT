@@ -24,11 +24,13 @@ def info(call):
                                            "рад помочь вам с помощью советов и мотивации"
                                            "\n\nGive it a try :)", reply_markup=keyboard)
 
+
 def menu(call):
     bot.answer_callback_query(call.id, "Вы вернулись в меню")
     bot.send_message(call.message.chat.id, "Вы вернулись в меню")
 
 
+# "id:", message.from_user.id
 # send you a message with the inline keyboard
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
@@ -60,10 +62,16 @@ def handle_callback_query(call):
     elif call.data == "info":  # if user choose info button
         info(call)
     elif call.data == "key_yes":
-        menu(call)
+        # menu(call)
+        send_welcome(call.message)
     else:
         bot.answer_callback_query(call.id, "Вы не нажимали кнопок")
 
+
+# @bot.callback_query_handler(func=lambda call: call.data == 'key_yes')
+# def handle_callback_query(call):
+#     # Возвращаем пользователя в меню
+#     send_welcome(call.message)
 
 # if user choose new dialog button
 @bot.message_handler(func=lambda m: True)

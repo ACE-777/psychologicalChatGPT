@@ -1,9 +1,0 @@
-version: "3.8"
-
-services:
-  app:
-    build: ./app
-    restart: unless-stopped
-    container_name: bot
-    ports:
-      - "8000:8000"

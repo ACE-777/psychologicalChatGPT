@@ -40,7 +40,7 @@ def send_welcome(message):
     keyboard.add(types.InlineKeyboardButton(text="Скоро. Развитие", callback_data="info"))
     keyboard.add(types.InlineKeyboardButton(text="Скоро. Психологически-успокаивающее общение после собеседования",
                                             callback_data="info"))
-    keyboard.add(types.InlineKeyboardButton(text="Список дел", callback_data="info"))
+    keyboard.add(types.InlineKeyboardButton(text="Скоро. Список дел", callback_data="info"))
     keyboard.add(types.InlineKeyboardButton(text="Info", callback_data="info"))
 
     bot.send_message(message.from_user.id, "Привет!\nМеня зовут getJobBot, я помогу Вам найти работу мечты и "
@@ -66,7 +66,6 @@ def handle_callback_query(call):
         find_new_offers(call)
     elif call.data == "tags_offers":
         found_new_offers_with_tags(call)
-        # found_new_offers_no_tags(call)
     elif call.data == "no_tags_offers":
         found_new_offers_no_tags(call)
     elif call.data == "get_interesting_links_from_user_response":
@@ -79,6 +78,8 @@ def handle_callback_query(call):
         get_link_of_job_vacancy_person(call)
     elif call.data == "get_link_of_job_vacancy_to_get_feedback_by_GPT":
         get_link_of_job_vacancy_gpt(call)
+    elif call.data == "advice_for_uprade_the_cv":
+        put_advices_to_user(call)
     else:
         bot.answer_callback_query(call.id, "Вы не нажимали кнопок")
 
@@ -307,6 +308,18 @@ def get_link_of_job_vacancy_and_response_gpt(message):
     outputFromModel = str(model("Улучши резюме:\n"+cv[0]+"\nПо вакансии:\n"+message.text, max_tokens).choices[0].text)
 
     bot.send_message(message.from_user.id, outputFromModel, reply_markup=keyboard)
+
+
+def put_advices_to_user(call):
+    bot.answer_callback_query(call.id, "Получить советы по улучшению резюме")
+
+    keyboard = types.InlineKeyboardMarkup()
+    keyboard.add(types.InlineKeyboardButton(text="Вернуться в меню", callback_data="key_yes"))
+
+    bot.send_message(call.message.chat.id, "Основные советы:\n\t1. Не делайте очень длинное резюме.\n\t2. Ключевые теги,"
+                                           "определяющие Вас как специалиста, вытягивайте на самый вверх!\n\nТакже можете "
+                                           "прочитать хорошую статью про составление резюме: "
+                                           "https://www.linkedin.com/feed/update/urn:li:activity:7037061986567786496?utm_source=share&utm_medium=member_desktop", reply_markup=keyboard)
 
 
 def info(call):

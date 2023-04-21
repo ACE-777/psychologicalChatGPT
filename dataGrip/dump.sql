@@ -36,6 +36,7 @@ CREATE TABLE chat.users_cv
     user_cv  Nullable(VARCHAR)
 ) ENGINE = Memory;
 
+
 INSERT INTO chat.useful_links (fields, job_services, forums, useful_links_about_making_CV) VALUES (null, 'https://hh.ru/', null, null);
 
 INSERT INTO chat.useful_links (fields, job_services, forums, useful_links_about_making_CV) VALUES (null, 'https://www.behance.net/joblist', null, null);

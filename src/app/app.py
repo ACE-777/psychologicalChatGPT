@@ -72,7 +72,13 @@ def handle_callback_query(call):
     elif call.data == "get_interesting_links_from_user_response":
         interesting_offers_from_user(call)
     elif call.data == "upgrade_cv":
-        return
+        upgrade_cv(call)
+    elif call.data == "get_cv":
+        get_data_of_cv(call)
+    elif call.data == "get_link_of_job_vacancy_to_get_feedback_by_person":
+        get_link_of_job_vacancy_person(call)
+    elif call.data == "get_link_of_job_vacancy_to_get_feedback_by_GPT":
+        get_link_of_job_vacancy_gpt(call)
     else:
         bot.answer_callback_query(call.id, "Вы не нажимали кнопок")
 
@@ -94,11 +100,13 @@ def edit_profile_add_tag_C_plus(message):
 
     connection.open()
     cursor = connection.cursor()
-    insert_query = "INSERT INTO chat.users_info (user_id,tags) VALUES ('{}','{}')".format(int(message.from_user.id),  "C++")
+    insert_query = "INSERT INTO chat.users_info (user_id,tags) VALUES ('{}','{}')".format(int(message.from_user.id),
+                                                                                          "C++")
     cursor.execute(insert_query)
     connection.close()
 
     bot.send_message(message.from_user.id, "Ты получил 10 очков!", reply_markup=keyboard)
+
 
 # if user choose new dialog button
 def request(call):
@@ -165,6 +173,7 @@ def found_new_offers_with_tags(message):
                                            "на них и прислать мне понравившиеся тебе ссылки. Ты получишь за это 10 "
                                            "очков!\n" + output, reply_markup=keyboard)
 
+
 @bot.message_handler(func=lambda m: True)
 def found_new_offers_no_tags(message):
     keyboard = types.InlineKeyboardMarkup()
@@ -185,6 +194,7 @@ def found_new_offers_no_tags(message):
                                            "на них и прислать мне понравившиеся тебе ссылки. Ты получишь за это 10 "
                                            "очков!\n" + output, reply_markup=keyboard)
 
+
 def interesting_offers_from_user(call):
     bot.send_message(call.message.chat.id, "Пожалуйста, пришлите понравившиеся Вам ссылки!")
 
@@ -198,13 +208,105 @@ def conversation_no_find_new_offers_response_with_links_from_user(message):
 
     connection.open()
     cursor = connection.cursor()
-    insert_query = "INSERT INTO chat.users_info (user_id,users_desired_vacancies) VALUES ('{}','{}')".format(int(message.from_user.id), message.text)
+    insert_query = "INSERT INTO chat.users_info (user_id,users_desired_vacancies) VALUES ('{}','{}')".format(
+        int(message.from_user.id), message.text)
     cursor.execute(insert_query)
     insert_query = "INSERT INTO chat.users_points VALUES ('{}','{}')".format(int(message.from_user.id), 10)
     cursor.execute(insert_query)
     connection.close()
 
     bot.send_message(message.from_user.id, "Ты получил 10 очков!", reply_markup=keyboard)
+
+
+def upgrade_cv(call):
+    bot.answer_callback_query(call.id, "Вы нажали кнопку \"Улучшить резюме под конкретную вакансию\"")
+
+    keyboard = types.InlineKeyboardMarkup()
+    keyboard.add(types.InlineKeyboardButton(text="Пожалуйста, пришлите ссылку или в виде текста Ваше резюме!",
+                                            callback_data="get_cv"))
+    keyboard.add(types.InlineKeyboardButton(text="Получить советы по улучшению резюме",
+                                            callback_data="advice_for_uprade_the_cv"))
+    keyboard.add(types.InlineKeyboardButton(text="Вернуться в меню", callback_data="key_yes"))
+
+    bot.send_message(call.message.chat.id, "Пожалуйста, выберете один из перечисленных вариантов"
+                                           "нет.", reply_markup=keyboard)
+
+
+def get_data_of_cv(call):
+    bot.send_message(call.message.chat.id, "Пожалуйста, пришлите ссылку или в виде текста Ваше резюме!")
+
+    bot.register_next_step_handler(call.message, save_user_cv_and_wait_for_job_offer)
+
+
+@bot.message_handler(func=lambda m: True)
+def save_user_cv_and_wait_for_job_offer(message):
+    keyboard = types.InlineKeyboardMarkup()
+    keyboard.add(types.InlineKeyboardButton(text="Получить сейчас feedback по улучшению резюме от ChatGPT",
+                                            callback_data="get_link_of_job_vacancy_to_get_feedback_by_GPT"))
+    keyboard.add(types.InlineKeyboardButton(text="Получить позже feedback по улучшению резюме от человека",
+                                            callback_data="get_link_of_job_vacancy_to_get_feedback_by_person"))
+    keyboard.add(types.InlineKeyboardButton(text="Вернуться в меню", callback_data="key_yes"))
+
+    connection.open()
+    cursor = connection.cursor()
+    insert_query = "INSERT INTO chat.users_cv (user_id, user_cv ) VALUES ('{}','{}')".format(
+        int(message.from_user.id), message.text)
+    cursor.execute(insert_query)
+    connection.close()
+
+    bot.send_message(message.from_user.id, "Пожалуйста выберете одни из предлогаемых вариантов!", reply_markup=keyboard)
+
+
+def get_link_of_job_vacancy_person(call):
+    bot.answer_callback_query(call.id, "Вы нажали кнопку \"Получить позже feedback по улучшению резюме от человека\"")
+    bot.send_message(call.message.chat.id, "Пожалуйста, пришлите ссылку на вакансию!")
+
+    bot.register_next_step_handler(call.message, new_dialog)
+
+    bot.register_next_step_handler(call.message, get_link_of_job_vacancy_person_for_save_in_clickhouse)
+
+
+@bot.message_handler(func=lambda m: True)
+def get_link_of_job_vacancy_person_for_save_in_clickhouse(message):
+    keyboard = types.InlineKeyboardMarkup()
+    keyboard.add(types.InlineKeyboardButton(text="Вернуться в меню", callback_data="key_yes"))
+
+    connection.open()
+    cursor = connection.cursor()
+    insert_query = "INSERT INTO chat.users_info (user_id, scope_of_job_search ) VALUES ('{}','{}')".format(
+        int(message.from_user.id), message.text)
+    cursor.execute(insert_query)
+    connection.close()
+
+    bot.send_message(message.from_user.id, "Спасибо, ожидайте проверки Вашего резюме!", reply_markup=keyboard)
+
+
+def get_link_of_job_vacancy_gpt(call):
+    bot.answer_callback_query(call.id, "Вы нажали кнопку \"Получить сейчас feedback по улучшению резюме от ChatGPT\"")
+    bot.send_message(call.message.chat.id, "Пожалуйста, пришлите ссылку на вакансию!")
+
+    bot.register_next_step_handler(call.message, new_dialog)
+
+    bot.register_next_step_handler(call.message, get_link_of_job_vacancy_and_response_gpt)
+
+
+@bot.message_handler(func=lambda m: True)
+def get_link_of_job_vacancy_and_response_gpt(message):
+    keyboard = types.InlineKeyboardMarkup()
+    keyboard.add(types.InlineKeyboardButton(text="Вернуться в меню", callback_data="key_yes"))
+
+    connection.open()
+    cursor = connection.cursor()
+    insert_query = "SELECT (user_cv) FROM chat.users_cv WHERE user_id = '{}'".format(message.from_user.id)
+    cursor.execute(insert_query)
+    results = cursor.fetchall()
+    cv = []
+    for link_from_db in results:
+        cv.append(link_from_db['user_cv'])
+
+    outputFromModel = str(model("Улучши резюме:\n"+cv[0]+"\nПо вакансии:\n"+message.text, max_tokens).choices[0].text)
+
+    bot.send_message(message.from_user.id, outputFromModel, reply_markup=keyboard)
 
 
 def info(call):

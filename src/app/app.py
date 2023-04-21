@@ -61,7 +61,7 @@ def handle_callback_query(call):
     elif call.data == "profile":
         profile(call)
     elif call.data == "C++":
-        edit_profile(call)
+        edit_profile_add_tag_C_plus(call)
     elif call.data == "find_new_offers":
         find_new_offers(call)
     elif call.data == "tags_offers":
@@ -89,12 +89,12 @@ def profile(call):
 
 
 @bot.message_handler(func=lambda m: True)
-def edit_profile(message):
+def edit_profile_add_tag_C_plus(message):
     keyboard = types.InlineKeyboardMarkup()
 
     connection.open()
     cursor = connection.cursor()
-    insert_query = "INSERT INTO chat.users_info VALUES ('{}','{}')".format(int(message.from_user.id),  "C++")
+    insert_query = "INSERT INTO chat.users_info (user_id,tags) VALUES ('{}','{}')".format(int(message.from_user.id),  "C++")
     cursor.execute(insert_query)
     connection.close()
 
@@ -198,6 +198,8 @@ def conversation_no_find_new_offers_response_with_links_from_user(message):
 
     connection.open()
     cursor = connection.cursor()
+    insert_query = "INSERT INTO chat.users_info (user_id,users_desired_vacancies) VALUES ('{}','{}')".format(int(message.from_user.id), message.text)
+    cursor.execute(insert_query)
     insert_query = "INSERT INTO chat.users_points VALUES ('{}','{}')".format(int(message.from_user.id), 10)
     cursor.execute(insert_query)
     connection.close()

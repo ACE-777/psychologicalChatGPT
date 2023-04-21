@@ -3,7 +3,11 @@ CREATE DATABASE chat;
 CREATE TABLE chat.users_info
 (
     user_id Nullable(Int32),
-    tags Nullable(String)
+    education Nullable(String),
+    scope_of_job_search Nullable(String),
+    tags Nullable(String),
+    output_of_tags Nullable(String),
+    users_desired_vacancies Nullable(String)
 ) ENGINE = Memory;
 -- ENGINE = MergeTre on disk
 
